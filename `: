@@ -1,0 +1,109 @@
+#! /bin/python
+
+import asyncio
+import re
+import sys
+
+async def smtp_read(reader, n, q: asyncio.Queue) -> None:
+    count = 0
+    while(count < n):
+        reply = await reader.readline()
+        result = reply.decode()
+        state = result[:3]
+        
+        if(state=='252'):
+            try:
+                name = result.split()[2]
+                print('found existing name {}'.format(name))
+                print(result)
+            except RuntimeError:
+                print('runt time error')
+                print(result)
+                
+            count +=1
+        elif(state=='550'):
+            print('not fountd')
+            count += 1
+        else:
+            print(result)
+        
+        await q.put(count+10)
+        
+
+async def smtp_write(namelist,writer, q: asyncio.Queue) -> None:
+    for name in namelist:
+        k = await q.get()    
+        message = 'VRFY '+  name + '\r\n'
+        writer.write(message.encode())
+
+
+
+async def smtp_enum(qq, name):
+    try:
+        reader, writer = await asyncio.open_connection(
+                host='10.11.1.217', port=25)
+    except OSError:
+        print('connection fail')
+    
+    print('connection sucess')
+    q = asyncio.Queue()
+    for i in range(10):
+        await q.put(i)
+
+    n = len(name)
+
+    producer = asyncio.create_task(smtp_read(reader, n, q))
+    consumer = asyncio.create_task(smtp_write(name,writer,q))
+    await consumer
+    await producer
+    
+    print('enumeration complete')
+    writer.write('QUIT'.encode())
+    print('send:QUIT')
+    writer.close()
+    await writer.wait_closed()
+    print('connetion was closed')
+    qq.put(0)
+
+async def aaaa(filename):
+    nameset = set()
+    enumer = set()
+    print(filename)
+    f = open(filename, "r")
+
+    q = asyncio.Queue()
+    for i in range(10):
+        await q.put(0)
+    c = 0
+    while(True):
+        line = f.readline()
+        if(line):
+            nameset.add(line)
+            if(len(nameset)==20):
+                
+
+        else:`
+            if(len(nameset)):
+                await q.get()
+                enumer.add(asyncio.create_task(smtp_enum(q, sorted(nameset)))) 
+                print("last connection")
+
+            if(len(nameset)==20):
+                await q.get()
+                print(c)
+                c += 1
+                enumer.add(asyncio.create_task(smtp_enum(q, sorted(nameset))))
+                nameset = set()
+
+
+    await asyncio.gather(*enumer)
+    print("end eunmeration")
+    f.close()
+
+if __name__=="__main__":
+
+    if(len(sys.argv)<2):
+        print("usage: ")
+    else:
+        asyncio.run(aaaa(sys.argv[1]))
+
