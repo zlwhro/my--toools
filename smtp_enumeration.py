@@ -12,8 +12,8 @@ async def smtp_read(fd, reader, n, q: asyncio.Queue) -> None:
         reply = await reader.readline()
         result = reply.decode()
         state = result[:3]
-        
-        if(state=='252'):
+
+        if(state =='252'):
             try:
                 name = result.split()[2]
                 print('found existing name {}'.format(name))
@@ -35,10 +35,10 @@ async def smtp_read(fd, reader, n, q: asyncio.Queue) -> None:
         await q.put(count+10)
         
 
-async def smtp_write(namelist,writer, q: asyncio.Queue) -> None:
+async def smtp_write(namelist, writer, q: asyncio.Queue) -> None:
     for name in namelist:
         k = await q.get()    
-        message = 'VRFY '+  name + '\r\n'
+        message = 'VRFY ' +  name + '\r\n'
         writer.write(message.encode())
 
 
@@ -54,14 +54,19 @@ async def smtp_enum(fd, qq, name):
     q = asyncio.Queue()
     for i in range(10):
         await q.put(i)
+        q._put
 
     n = len(name)
+
+
+
+	
 
     producer = asyncio.create_task(smtp_read(fd, reader, n, q))
     consumer = asyncio.create_task(smtp_write(name,writer,q))
     await consumer
     await producer
-    
+ 
     print('enumeration complete')
     writer.write('QUIT'.encode())
     print('send:QUIT')
@@ -104,6 +109,7 @@ async def aaaa(readfile, writefile):
     print("end eunmeration")
     f.close()
 
+	
 if __name__=="__main__":
 
     if(len(sys.argv)<3):
