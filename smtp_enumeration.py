@@ -1,19 +1,17 @@
-#! /bin/python
-
 import asyncio
-import re
 import sys
 import copy
+
 
 async def smtp_read(fd, reader, n, q: asyncio.Queue) -> None:
     count = 0
     lock = asyncio.Lock()
-    while(count < n):
+    while (count < n):
         reply = await reader.readline()
         result = reply.decode()
         state = result[:3]
 
-        if(state =='252'):
+        if (state == '252'):
             try:
                 name = result.split()[2]
                 print('found existing name {}'.format(name))
@@ -23,24 +21,22 @@ async def smtp_read(fd, reader, n, q: asyncio.Queue) -> None:
             except RuntimeError:
                 print('runt time error')
                 print(result)
-                
-            count +=1
-        elif(state=='550'):
+                count += 1
+
+        elif (state == '550'):
             count += 1
         else:
-            if(state != '220'):
+            if (state != '220'):
                 count += 1
             print(result)
-        
+
         await q.put(count+10)
-        
 
 async def smtp_write(namelist, writer, q: asyncio.Queue) -> None:
     for name in namelist:
         k = await q.get()    
         message = 'VRFY ' +  name + '\r\n'
         writer.write(message.encode())
-
 
 
 async def smtp_enum(fd, qq, name):
@@ -58,12 +54,8 @@ async def smtp_enum(fd, qq, name):
 
     n = len(name)
 
-
-
-	
-
     producer = asyncio.create_task(smtp_read(fd, reader, n, q))
-    consumer = asyncio.create_task(smtp_write(name,writer,q))
+    consumer = asyncio.create_task(smtp_write(name,writer, q))
     await consumer
     await producer
  
@@ -86,34 +78,32 @@ async def aaaa(readfile, writefile):
     for i in range(10):
         await q.put(0)
     
-    while(True):
+    while (True):
         line = f.readline()
-        if(len(line) > 0):
+        if (len(line) > 0):
             namelist.append(copy.deepcopy(line[:-1]))
-            if(len(namelist)==20): 
+            if (len(namelist)==20): 
                 await q.get()
-                enumer.append(asyncio.create_task(smtp_enum(f2, q,copy.deepcopy(namelist) )))
-                namelist=[]
-                print("connection",c)
+                enumer.append(asyncio.create_task(smtp_enum(f2, q,copy.deepcopy(namelist) ) ) )
+                namelist = []
+                print("connection", c)
                 c += 1
         else:
-            if(len(namelist)):
+            if (len(namelist)):
                 await q.get()
-                enumer.append(asyncio.create_task(smtp_enum(f2, q, copy.deepcopy(namelist)))) 
+                enumer.append(asyncio.create_task(
+                    smtp_enum(f2, q, copy.deepcopy(namelist))))
                 print("last connection")
                 print(namelist)
                 break
-
 
     await asyncio.gather(*enumer)
     print("end eunmeration")
     f.close()
 
-	
-if __name__=="__main__":
+if __name__ == "__main__":
 
-    if(len(sys.argv)<3):
+    if (len(sys.argv) < 3):
         print("usage: ")
     else:
-        asyncio.run(aaaa(sys.argv[1],sys.argv[2]))
-
+        asyncio.run(aaaa(sys.argv[1], sys.argv[2]))
