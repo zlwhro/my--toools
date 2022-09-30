@@ -7,11 +7,13 @@ using namespace std;
 int main()
 {
     ofstream of; 
-    of.open("/home/kali/OS_practice/bad.txt", std::ios::out | std::ios::binary);
-    vector<unsigned char> payload;
+    of.open("/home/kali/my-tools/bad.txt", std::ios::out | std::ios::binary);
+    vector<unsigned char> payload(1308,'A');
     vector<unsigned char> bad(256,0);
     bad[0] = 1;
     bad[10] = 1;
+    bad[0x12] = 1;
+    bad[0x1A] = 1;
 
     for(int i=0;i<256;++i)
         if(!bad[i])
