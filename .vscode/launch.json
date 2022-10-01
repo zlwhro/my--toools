@@ -1,6 +1,7 @@
 {
     "version": "0.2.0",
     "configurations": [
+
         {
             "name": "Python: bad",
             "type": "python",
@@ -13,13 +14,11 @@
             "name": "Python: fuzzer",
             "type": "python",
             "request": "launch",
-            "program": "/home/kali/my-tools/fuzzer.py",
+            "program": "/home/kali/my--toools/fuzzer.py",
             "console": "integratedTerminal",
             "args": [
                 "-ip",
-                "192.168.195.10",
-                "-pa",
-                "/login",
+                "127.0.0.1",
                 "-p",
                 "4444"
             ],

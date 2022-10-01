@@ -1,14 +1,15 @@
 
 import asyncio
 import argparse
+import sys
 
 
-def Packet_Generator(address, path,mode):
+def Packet_Generator(address, port):
 
     fuz = b""
     while(1):
         fuz += b"a"*100
-        yield fuz
+        yield fuz+B"\x0A"
         ##yield header + content
 
 
@@ -20,29 +21,32 @@ async def main():
 
     args = parser.parse_args()
 
-    ip = args.ip_address
-    port = args.port
-
-    packet = Packet_Generator(ip.encode(),args.path.encode())
+    packet = Packet_Generator(args.ip_address,args.port)
 
     count = 0
     try:
-        reader, writer = await asyncio.open_connection(
-                host=ip, port=port)
+        """reader, writer = await asyncio.open_connection(
+                host=ip, port=port)"""
         while(1):
+            reader, writer = await asyncio.open_connection(
+                host=args.ip_address, port=args.port)
             d = next(packet)
-            print(d)
-            try:
-                writer.write(d)
-                reply = await reader.read()
-                print(reply.decode())
+
+            writer.write(d)
+            reply = await reader.read()
+            reply = reply.decode()
+            if("without error" in reply):
+                print(reply)
+                print(count)
                 count += 1
-            except asyncio.exceptions:
+            else:
                 print("coumt {}".format(count))
+                break
 
 
         
     except OSError:
         print('connection fail')
+        sys.exit(1)
 
 asyncio.run(main())
